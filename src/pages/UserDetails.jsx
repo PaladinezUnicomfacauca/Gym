@@ -24,7 +24,9 @@ const UserDetails = () => {
         id_plan: '',
         id_method: '',
         id_manager: '',
-        receipt_number: ''
+        receipt_number: '',
+        registration_date: '',  // Nueva fecha de inscripción
+        last_payment_date: ''   // Nueva fecha de último pago
     });
 
     // Obtener manager logueado
@@ -64,7 +66,9 @@ const UserDetails = () => {
                     id_plan: matchingPlan ? matchingPlan.id_plan.toString() : '',
                     id_method: matchingMethod ? matchingMethod.id_method.toString() : '',
                     id_manager: latestMembership?.id_manager?.toString() || '',
-                    receipt_number: latestMembership?.receipt_number || ''
+                    receipt_number: latestMembership?.receipt_number || '',
+                    registration_date: userData.created_at || '',
+                    last_payment_date: latestMembership?.last_payment || ''
                 });
             } catch (err) {
                 setError('Error al cargar los datos del usuario');
@@ -94,7 +98,9 @@ const UserDetails = () => {
             id_plan: matchingPlan ? matchingPlan.id_plan.toString() : '',
             id_method: matchingMethod ? matchingMethod.id_method.toString() : '',
             id_manager: latestMembership?.id_manager?.toString() || '',
-            receipt_number: latestMembership?.receipt_number || ''
+            receipt_number: latestMembership?.receipt_number || '',
+            registration_date: user.created_at || '',
+            last_payment_date: latestMembership?.last_payment || ''
         };
         
         setFormData(formDataToSet);
@@ -147,7 +153,9 @@ const UserDetails = () => {
                 id_plan: formData.id_plan,
                 id_method: formData.id_method,
                 receipt_number: formData.receipt_number,
-                id_manager: loggedManagerId 
+                id_manager: loggedManagerId,
+                registration_date: formData.registration_date || null,
+                last_payment_date: formData.last_payment_date || null
             };
             
             const response = await userService.updateUserWithMembership(userId, updateData);
@@ -332,6 +340,40 @@ const UserDetails = () => {
                                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-100"
                                     required
                                 />
+                            </div>
+                        )}
+
+                        {/* Fecha de Inscripción */}
+                        {isEditing && (
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-2">
+                                    Fecha de Inscripción
+                                </label>
+                                <input
+                                    type="date"
+                                    name="registration_date"
+                                    value={formData.registration_date}
+                                    onChange={handleInputChange}
+                                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-100"
+                                />
+                                <p className="text-xs text-gray-500 mt-1">Dejar vacío para mantener fecha actual</p>
+                            </div>
+                        )}
+
+                        {/* Fecha de Último Pago */}
+                        {isEditing && (
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-2">
+                                    Fecha de Último Pago
+                                </label>
+                                <input
+                                    type="date"
+                                    name="last_payment_date"
+                                    value={formData.last_payment_date}
+                                    onChange={handleInputChange}
+                                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-100"
+                                />
+                                <p className="text-xs text-gray-500 mt-1">Dejar vacío para usar fecha actual</p>
                             </div>
                         )}
                     </div>
