@@ -59,7 +59,7 @@ const MembreshipsTable = ({ data, states = [], selectedState = "todos", onStateC
                             key={item.id_membership} 
                             className="hover:bg-gray-50"
                         >
-                            <td className="px-6 py-4 border-b border-gray-200 whitespace-nowrap">{index + 1}</td> 
+                            <td className="px-6 py-4 border-b border-gray-200 whitespace-nowrap">{data.length - index}</td> 
                             <td className="px-6 py-4 border-b border-gray-200 whitespace-nowrap">{item.name_user}</td> 
                             <td className="px-6 py-4 border-b border-gray-200 whitespace-nowrap">{item.user_phone}</td> 
                             <td className="px-6 py-4 border-b border-gray-200 whitespace-nowrap">{item.user_created_at}</td> 

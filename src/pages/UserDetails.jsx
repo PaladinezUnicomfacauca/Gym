@@ -3,7 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { userService } from '../services/userService';
 import { planService } from '../services/planService';
 import { paymentMethodService } from '../services/paymentMethodService';
-import { MdEdit } from "react-icons/md";
+import { MdEdit, MdDelete } from "react-icons/md";
 import { FiChevronLeft } from "react-icons/fi";
 import { FaCaretDown } from "react-icons/fa";
 
@@ -185,6 +185,27 @@ const UserDetails = () => {
         }
     };
 
+    const handleDelete = async () => {
+        const confirmMessage = '¿Estás seguro de que deseas eliminar este usuario? Esta acción no se puede deshacer.';
+        
+        if (window.confirm(confirmMessage)) {
+            try {
+                setLoading(true);
+                setError(null);
+                
+                await userService.delete(userId);
+                
+                // Redireccionar a la lista de membresías después de eliminar
+                navigate('/membresias');
+            } catch (err) {
+                console.error('Error al eliminar usuario:', err);
+                const errorMessage = err.response?.data?.error || 'Error al eliminar el usuario';
+                setError(errorMessage);
+                setLoading(false);
+            }
+        }
+    };
+
     if (loading) {
         return (
             <div className="container mx-auto px-8 py-10">
@@ -213,7 +234,7 @@ const UserDetails = () => {
         <div className="container mx-auto px-8 py-10">
             <div className="max-w-4xl mx-auto">
                 <div className="flex justify-between items-center mb-8">
-                    <h1 className="text-3xl font-bold">Detalles del Usuario</h1>
+                    <h1 className="text-3xl font-bold">Datos del Usuario</h1>
                     <button
                         onClick={() => navigate('/membresias')}
                         className="bg-gray-200 hover:bg-gray-300 text-gray-700 px-4 py-2 rounded-md font-medium transition-colors cursor-pointer"
@@ -389,7 +410,7 @@ const UserDetails = () => {
                                         <div className="text-sm">{memberships[0].last_payment}</div>
                                     </div>
                                     <div>
-                                        <label className="block text-sm font-medium text-gray-700 mb-1">Fecha de Expiración</label>
+                                        <label className="block text-sm font-medium text-gray-700 mb-1">Fecha de Vencimiento</label>
                                         <div className="text-sm">{memberships[0].expiration_date}</div>
                                     </div>
                                     <div>
@@ -418,13 +439,22 @@ const UserDetails = () => {
                     {/* Botones de acción */}
                     <div className="mt-8 pt-6 border-t border-gray-200 flex justify-between">
                         {!isEditing ? (
-                            <button
-                                onClick={handleStartEditing}
-                                className="flex items-center gap-2 bg-blue-100 hover:bg-blue-200 text-blue-800 px-4 py-2 rounded-md font-medium transition-colors cursor-pointer"
-                            >
-                                Editar
-                                <MdEdit />
-                            </button>
+                            <>
+                                <button
+                                    onClick={handleStartEditing}
+                                    className="flex items-center gap-2 bg-blue-100 hover:bg-blue-200 text-blue-800 px-4 py-2 rounded-md font-medium transition-colors cursor-pointer"
+                                >
+                                    Editar
+                                    <MdEdit />
+                                </button>
+                                <button
+                                    onClick={handleDelete}
+                                    className="flex items-center gap-2 bg-red-100 hover:bg-red-200 text-red-800 px-4 py-2 rounded-md font-medium transition-colors cursor-pointer"
+                                >
+                                    Eliminar
+                                    <MdDelete />
+                                </button>
+                            </>
                         ) : (
                             <>
                                 <button
