@@ -13,6 +13,7 @@ export default function Login() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
+  // Carga los administradores al iniciar para llenar el select.
   useEffect(() => {
     const fetchManagers = async () => {
       try {
@@ -25,11 +26,13 @@ export default function Login() {
     fetchManagers();
   }, []);
 
+  // Actualiza formData cuando cambia un campo del formulario.
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
   };
 
+  // Envía el login, maneja errores y redirige si es correcto.
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
