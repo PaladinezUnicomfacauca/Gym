@@ -27,16 +27,18 @@ export default function ManagerProfile() {
   const [passwordError, setPasswordError] = useState('');
   const [passwordSuccess, setPasswordSuccess] = useState('');
 
+  // Al montar (o si cambia el id): carga el administrador desde el servidor y rellena el formulario.
   useEffect(() => {
     if (!id) {
       setError('No hay sesión activa.');
       setLoading(false);
       return;
     }
+    // Pide los datos del manager logueado y actualiza estado local.
     const fetchManager = async () => {
       try {
         setLoading(true);
-        const data = await managerService.getById(id); // id_manager del logueado
+        const data = await managerService.getById(id);
         setManager(data);
         setFormData({
           name_manager: data.name_manager || '',
@@ -52,6 +54,7 @@ export default function ManagerProfile() {
     fetchManager();
   }, [id]);
 
+  // Activa el modo edición y sincroniza el formulario con los datos guardados.
   const handleStartEditing = () => {
     setFormData({
       name_manager: manager.name_manager || '',
@@ -61,11 +64,13 @@ export default function ManagerProfile() {
     setIsEditing(true);
   };
 
+  // Actualiza nombre, teléfono o email mientras el usuario escribe.
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
   };
 
+  // Sale del modo edición, restaura el formulario y limpia los campos de contraseña.
   const handleCancel = () => {
     setIsEditing(false);
     setFormData({
@@ -77,6 +82,7 @@ export default function ManagerProfile() {
     setPasswordData({ current: '', new: '', confirm: '' });
   };
 
+  // Guarda los cambios en el servidor (y opcionalmente la contraseña) y refresca el perfil.
   const handleUpdate = async () => {
     try {
       setLoading(true);
@@ -127,6 +133,7 @@ export default function ManagerProfile() {
     }
   };
 
+  // Actualiza los inputs de contraseña y borra mensajes de error/éxito previos.
   const handlePasswordChange = (e) => {
     const { name, value } = e.target;
     setPasswordData(prev => ({ ...prev, [name]: value }));
@@ -134,6 +141,7 @@ export default function ManagerProfile() {
     setPasswordSuccess('');
   };
 
+  // Pantalla de espera mientras se cargan los datos.
   if (loading) {
     return (
       <div className="container mx-auto px-8 py-10">
@@ -142,6 +150,7 @@ export default function ManagerProfile() {
     );
   }
 
+  // Error global (sesión, carga o actualización fallida).
   if (error) {
     return (
       <div className="container mx-auto px-8 py-10">
@@ -150,6 +159,7 @@ export default function ManagerProfile() {
     );
   }
 
+  // No hay registro de administrador tras la petición.
   if (!manager) {
     return (
       <div className="container mx-auto px-8 py-10">
