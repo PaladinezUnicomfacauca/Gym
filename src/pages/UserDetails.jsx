@@ -29,17 +29,18 @@ const UserDetails = () => {
         last_payment_date: ''   // Nueva fecha de último pago
     });
 
-    // Obtener manager logueado
+    // Administrador en sesión (desde localStorage).
     const managerData = JSON.parse(localStorage.getItem('managerData'));
     const loggedManagerId = managerData?.id_manager;
     const loggedManagerName = managerData?.name_manager;
 
+    // Al montar o si cambia el usuario: carga datos, planes y métodos; rellena el formulario.
     useEffect(() => {
+        // Pide usuario, membresías, planes y métodos en paralelo y arma el estado inicial.
         const fetchData = async () => {
             try {
                 setLoading(true);
                 
-                // Fetch all data in parallel
                 const [userData, membershipsData, plansData, methodsData] = await Promise.all([
                     userService.getById(userId),
                     userService.getMembershipsByUser(userId),
@@ -52,11 +53,10 @@ const UserDetails = () => {
                 setPlans(plansData);
                 setPaymentMethods(methodsData);
 
-                // Get the most recent membership for form data
+                // Membresía más reciente para enlazar plan y método al formulario.
                 const latestMembership = membershipsData.length > 0 ? membershipsData[0] : null;
                 
-                // Initialize form data with current values
-                // Find the plan and method that match the membership data
+                // Plan y método que coinciden con esa membresía (por duración y nombre).
                 const matchingPlan = plansData.find(plan => plan.days_duration === latestMembership?.days_duration);
                 const matchingMethod = methodsData.find(method => method.name_method === latestMembership?.name_method);
                 
@@ -83,15 +83,14 @@ const UserDetails = () => {
 
 
 
-    // Function to update form data when editing starts
+    // Activa el modo edición y sincroniza el formulario con usuario y última membresía.
     const handleStartEditing = () => {
         const latestMembership = memberships.length > 0 ? memberships[0] : null;
         
-        // Find the plan and method that match the membership data
         const matchingPlan = plans.find(plan => plan.days_duration === latestMembership?.days_duration);
         const matchingMethod = paymentMethods.find(method => method.name_method === latestMembership?.name_method);
         
-        // Convert to string to ensure proper comparison with select values
+        // IDs como string para que coincidan con los valores de los <select>.
         const formDataToSet = {
             name_user: user.name_user || '',
             phone: user.phone || '',
@@ -107,6 +106,7 @@ const UserDetails = () => {
         setIsEditing(true);
     };
 
+    // Actualiza los campos del formulario mientras el usuario escribe.
     const handleInputChange = (e) => {
         const { name, value } = e.target;
         setFormData(prev => ({
@@ -115,12 +115,11 @@ const UserDetails = () => {
         }));
     };
 
+    // Cancela la edición y restaura el formulario a los valores guardados.
     const handleCancel = () => {
         setIsEditing(false);
-        // Reset form data to original values
         const latestMembership = memberships.length > 0 ? memberships[0] : null;
         
-        // Find the plan and method that match the membership data
         const matchingPlan = plans.find(plan => plan.days_duration === latestMembership?.days_duration);
         const matchingMethod = paymentMethods.find(method => method.name_method === latestMembership?.name_method);
         
@@ -134,19 +133,18 @@ const UserDetails = () => {
         });
     };
 
+    // Envía los cambios al servidor y vuelve a cargar usuario y membresías.
     const handleUpdate = async () => {
         try {
             setLoading(true);
             setError(null);
             
-            // Validación adicional en el frontend
             if (!formData.receipt_number.trim()) {
                 setError('El número de recibo es requerido');
                 setLoading(false);
                 return;
             }
             
-            // Solo enviar los campos que realmente necesitamos actualizar
             const updateData = {
                 name_user: formData.name_user,
                 phone: formData.phone,
@@ -158,9 +156,8 @@ const UserDetails = () => {
                 last_payment_date: formData.last_payment_date || null
             };
             
-            const response = await userService.updateUserWithMembership(userId, updateData);
+            await userService.updateUserWithMembership(userId, updateData);
             
-            // Refresh user and memberships data
             const [userData, membershipsData] = await Promise.all([
                 userService.getById(userId),
                 userService.getMembershipsByUser(userId)
@@ -170,21 +167,22 @@ const UserDetails = () => {
             setIsEditing(false);
             alert('Usuario actualizado exitosamente');
         } catch (err) {
-            console.error('=== ERROR DETAILS ===');
-            console.error('Full error object:', err);
-            console.error('Error response:', err.response);
-            console.error('Error response data:', err.response?.data);
-            console.error('Error message:', err.message);
-            console.error('Error status:', err.response?.status);
+            console.error('=== Detalle del error ===');
+            console.error('Objeto de error:', err);
+            console.error('Respuesta:', err.response);
+            console.error('Datos de la respuesta:', err.response?.data);
+            console.error('Mensaje:', err.message);
+            console.error('Estado HTTP:', err.response?.status);
             
             const errorMessage = err.response?.data?.error || 'Error al actualizar el usuario';
             setError(errorMessage);
-            console.error('Backend error:', err.response?.data || err);
+            console.error('Error del backend:', err.response?.data || err);
         } finally {
             setLoading(false);
         }
     };
 
+    // Pide confirmación, elimina el usuario en el servidor y va a la lista de membresías.
     const handleDelete = async () => {
         const confirmMessage = '¿Estás seguro de que deseas eliminar este usuario? Esta acción no se puede deshacer.';
         
@@ -195,7 +193,6 @@ const UserDetails = () => {
                 
                 await userService.delete(userId);
                 
-                // Redireccionar a la lista de membresías después de eliminar
                 navigate('/membresias');
             } catch (err) {
                 console.error('Error al eliminar usuario:', err);
@@ -206,6 +203,7 @@ const UserDetails = () => {
         }
     };
 
+    // Pantalla de espera mientras se cargan los datos.
     if (loading) {
         return (
             <div className="container mx-auto px-8 py-10">
@@ -214,6 +212,7 @@ const UserDetails = () => {
         );
     }
 
+    // Error global (carga o actualización fallida).
     if (error) {
         return (
             <div className="container mx-auto px-8 py-10">
@@ -222,6 +221,7 @@ const UserDetails = () => {
         );
     }
 
+    // No hay usuario tras la petición.
     if (!user) {
         return (
             <div className="container mx-auto px-8 py-10">

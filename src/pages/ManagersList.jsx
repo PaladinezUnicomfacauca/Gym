@@ -19,7 +19,9 @@ const ManagersList = () => {
             .replace(/\u0300-\u036f/g, "") // quita tildes
             .replace(/[^a-z0-9]/gi, ""); // quita caracteres especiales
 
+    // Al montar: carga todos los administradores desde el servidor.
     useEffect(() => {
+        // Pide la lista y actualiza el estado; al terminar quita el estado de carga.
         const fetchManagers = async () => {
             try {
                 const data = await managerService.getAll();
@@ -33,11 +35,11 @@ const ManagersList = () => {
         fetchManagers();
     }, []);
 
+    // Pide confirmación, elimina en el servidor y quita el ítem de la lista local.
     const handleDelete = async (managerId) => {
         if (window.confirm('¿Estás seguro de que deseas eliminar este administrador?')) {
             try {
                 await managerService.delete(managerId);
-                // Actualizar la lista después de eliminar
                 setManagers(managers.filter(manager => manager.id_manager !== managerId));
                 alert('Administrador eliminado exitosamente');
             } catch (err) {

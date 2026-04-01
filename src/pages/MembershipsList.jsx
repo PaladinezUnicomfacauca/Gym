@@ -23,7 +23,9 @@ const MembershipsList = () => {
             .replace(/\u0300-\u036f/g, "") // quita tildes
             .replace(/[^a-z0-9]/gi, ""); // quita caracteres especiales
 
+    // Al montar: carga todas las membresías con detalle desde el servidor.
     useEffect(() => {
+        // Pide la lista y actualiza el estado; al terminar quita el estado de carga.
         const fetchMemberships = async () => {
             try {
                 const data = await membershipService.getAllWithDetails();

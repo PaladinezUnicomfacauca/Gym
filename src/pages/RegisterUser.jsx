@@ -23,7 +23,9 @@ export default function RegisterUser() {
   const [selectedPlan, setSelectedPlan] = useState(null);
   const [manager, setManager] = useState(null);
 
+  // Al montar: carga planes y métodos de pago, y el administrador de sesión desde localStorage.
   useEffect(() => {
+    // Pide planes y métodos en paralelo y actualiza el estado.
     const fetchData = async () => {
       try {
         const [plansData, methodsData] = await Promise.all([
@@ -37,13 +39,13 @@ export default function RegisterUser() {
       }
     };
     fetchData();
-    // Obtener manager logueado
     const managerData = localStorage.getItem('managerData');
     if (managerData) {
       setManager(JSON.parse(managerData));
     }
   }, []);
 
+  // Si cambia el plan elegido o la lista de planes, actualiza el plan seleccionado (detalle en pantalla).
   useEffect(() => {
     if (formData.id_plan) {
       const plan = plans.find(p => p.id_plan === parseInt(formData.id_plan));
@@ -53,6 +55,7 @@ export default function RegisterUser() {
     }
   }, [formData.id_plan, plans]);
 
+  // Actualiza los campos del formulario mientras el usuario escribe.
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     setFormData(prev => ({
@@ -61,6 +64,7 @@ export default function RegisterUser() {
     }));
   };
 
+  // Crea usuario con membresía (incluye el administrador logueado) y navega a la lista de membresías.
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);

@@ -14,6 +14,7 @@ export default function RegisterManager() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
+  // Actualiza nombre, teléfono, email o contraseñas mientras el usuario escribe.
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     setFormData(prev => ({
@@ -51,6 +52,7 @@ export default function RegisterManager() {
     return true;
   };
 
+  // Valida el formulario, crea el administrador en el servidor y navega a la lista.
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
