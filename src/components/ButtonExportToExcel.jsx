@@ -5,6 +5,8 @@ import { membershipService } from '../services/membershipService';
 const ButtonExportToExcel = ({ searchTerm, selectedState, selectedPlan }) => {
     const [exporting, setExporting] = useState(false);
 
+    // Descarga un Excel de membresías aplicando los filtros actuales (búsqueda, estado y plan).
+    // Mientras descarga desactiva el botón; si falla, muestra un aviso al usuario.
     const handleExportToExcel = async () => {
         try {
             setExporting(true);

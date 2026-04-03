@@ -3,6 +3,7 @@ import React, { useEffect, useRef } from 'react';
 const Dropdown = ({ open, onClose, children, className = '' }) => {
   const ref = useRef();
 
+  // Con el menú abierto, cierra al hacer clic fuera del contenedor; al desmontar o cerrar se quita el listener.
   useEffect(() => {
     if (!open) return;
     function handleClickOutside(event) {
@@ -16,6 +17,7 @@ const Dropdown = ({ open, onClose, children, className = '' }) => {
     };
   }, [open, onClose]);
 
+  // No renderiza nada si el dropdown está cerrado.
   if (!open) return null;
 
   return (
