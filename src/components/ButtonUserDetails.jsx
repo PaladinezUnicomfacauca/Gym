@@ -5,6 +5,7 @@ import { FaEye } from "react-icons/fa";
 const ButtonUserDetails = ({ userId }) => {
     const navigate = useNavigate();
 
+    // Navega a la pantalla de detalle del usuario según su id.
     const handleClick = () => {
         navigate(`/detalles-usuario/${userId}`);
     };
