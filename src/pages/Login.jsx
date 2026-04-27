@@ -17,7 +17,7 @@ export default function Login() {
   useEffect(() => {
     const fetchManagers = async () => {
       try {
-        const data = await managerService.getAll();
+        const data = await managerService.getLoginList();
         setManagers(data);
       } catch (err) {
         setError('Error al cargar administradores');

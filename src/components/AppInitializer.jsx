@@ -98,7 +98,7 @@ const AppInitializer = ({ children }) => {
       import('../services/managerService').then(({ managerService }) => {
         import('../services/membershipService').then(({ membershipService }) => {
           Promise.all([
-            managerService.getAll().catch(() => null),
+            managerService.getLoginList().catch(() => null),
             membershipService.getAllWithDetails().catch(() => null),
           ]).then(() => {
             setIsPreloading(false)

@@ -14,6 +14,8 @@ const Nav = () => {
     // Obtener el nombre y el id del manager logueado
     let managerName = 'Iniciado';
     let managerId = null;
+    let managerRole = '';
+    let managerRoleId = null;
     try {
       const managerData = JSON.parse(localStorage.getItem('managerData'));
       if (managerData && managerData.name_manager) {
@@ -22,7 +24,13 @@ const Nav = () => {
       if (managerData && managerData.id_manager) {
         managerId = managerData.id_manager;
       }
+      if (managerData) {
+        managerRole = String(managerData.name_role || managerData.role || managerData.rol || '').trim().toLowerCase();
+        managerRoleId = managerData.id_role;
+      }
     } catch (e) {}
+
+    const isSuperuser = managerRole === 'superusuario' || Number(managerRoleId) === 1;
 
     const handleHome = () => {
         navigate('/membresias')
@@ -98,13 +106,15 @@ const Nav = () => {
                                 <FaUserCircle />
                                 Perfil
                             </button>
-                            <button
-                                className="flex items-center gap-2 w-full text-left px-4 py-2 text-gray-700 hover:bg-gray-50 cursor-pointer"
-                                onClick={handleManagers}
-                            >
-                                <FaUserGroup />
-                                Administradores
-                            </button>
+                            {isSuperuser && (
+                                <button
+                                    className="flex items-center gap-2 w-full text-left px-4 py-2 text-gray-700 hover:bg-gray-50 cursor-pointer"
+                                    onClick={handleManagers}
+                                >
+                                    <FaUserGroup />
+                                    Administradores
+                                </button>
+                            )}
                             <button
                                 className="flex items-center gap-2 w-full text-left px-4 py-2 text-gray-700 hover:bg-gray-50 cursor-pointer"
                                 onClick={handleLogout}

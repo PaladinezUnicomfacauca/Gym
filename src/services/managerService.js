@@ -1,6 +1,15 @@
 import api from "./api";
 
 export const managerService = {
+  getLoginList: async () => {
+    try {
+      const response = await api.get("/managers/login-list", { skipAuth: true });
+      return response.data;
+    } catch (error) {
+      throw error;
+    }
+  },
+
   getAll: async () => {
     try {
       const response = await api.get("/managers");
