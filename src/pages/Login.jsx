@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { managerService } from '../services/managerService';
 import { FaCaretDown } from "react-icons/fa";
+import { FaEye, FaEyeSlash } from "react-icons/fa";
 
 export default function Login() {
   const navigate = useNavigate();
@@ -10,6 +11,7 @@ export default function Login() {
     name_manager: '',
     password: ''
   });
+  const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
@@ -83,15 +85,27 @@ export default function Login() {
           </div>
           <div>
             <label className='block text-gray-500 text-sm mb-2' htmlFor='password'>Contraseña</label>
-            <input
-              type='password'
-              id='password'
-              name='password'
-              value={formData.password}
-              onChange={handleInputChange}
-              className='w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-blue-100'
-              required
-            />
+            <div className='relative'>
+              <input
+                type={showPassword ? 'text' : 'password'}
+                id='password'
+                name='password'
+                value={formData.password}
+                onChange={handleInputChange}
+                className={`w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-blue-100 ${formData.password ? 'pr-10' : ''}`}
+                required
+              />
+              {formData.password && (
+                <button
+                  type='button'
+                  onClick={() => setShowPassword(prev => !prev)}
+                  className='absolute inset-y-0 right-0 flex items-center px-3 text-gray-500 hover:text-gray-700 cursor-pointer'
+                  aria-label={showPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'}
+                >
+                  {showPassword ? <FaEyeSlash /> : <FaEye />}
+                </button>
+              )}
+            </div>
           </div>
           <button
             type='submit'

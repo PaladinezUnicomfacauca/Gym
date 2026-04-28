@@ -16,7 +16,6 @@ const UserDetails = () => {
     const [error, setError] = useState(null);
     const [plans, setPlans] = useState([]);
     const [paymentMethods, setPaymentMethods] = useState([]);
-    const [managers, setManagers] = useState([]);
     const [isEditing, setIsEditing] = useState(false);
     const [formData, setFormData] = useState({
         name_user: '',
@@ -24,9 +23,7 @@ const UserDetails = () => {
         id_plan: '',
         id_method: '',
         id_manager: '',
-        receipt_number: '',
-        registration_date: '',  // Nueva fecha de inscripción
-        last_payment_date: ''   // Nueva fecha de último pago
+        receipt_number: ''
     });
 
     // Administrador en sesión (desde localStorage).
@@ -66,9 +63,7 @@ const UserDetails = () => {
                     id_plan: matchingPlan ? matchingPlan.id_plan.toString() : '',
                     id_method: matchingMethod ? matchingMethod.id_method.toString() : '',
                     id_manager: latestMembership?.id_manager?.toString() || '',
-                    receipt_number: latestMembership?.receipt_number || '',
-                    registration_date: userData.created_at || '',
-                    last_payment_date: latestMembership?.last_payment || ''
+                    receipt_number: latestMembership?.receipt_number || ''
                 });
             } catch (err) {
                 setError('Error al cargar los datos del usuario');
@@ -97,9 +92,7 @@ const UserDetails = () => {
             id_plan: matchingPlan ? matchingPlan.id_plan.toString() : '',
             id_method: matchingMethod ? matchingMethod.id_method.toString() : '',
             id_manager: latestMembership?.id_manager?.toString() || '',
-            receipt_number: latestMembership?.receipt_number || '',
-            registration_date: user.created_at || '',
-            last_payment_date: latestMembership?.last_payment || ''
+            receipt_number: latestMembership?.receipt_number || ''
         };
         
         setFormData(formDataToSet);
@@ -109,9 +102,15 @@ const UserDetails = () => {
     // Actualiza los campos del formulario mientras el usuario escribe.
     const handleInputChange = (e) => {
         const { name, value } = e.target;
+        let next = value;
+        if (name === 'name_user') {
+            next = value.replace(/\d/g, '');
+        } else if (name === 'phone') {
+            next = value.replace(/\D/g, '').slice(0, 10);
+        }
         setFormData(prev => ({
             ...prev,
-            [name]: value
+            [name]: next
         }));
     };
 
@@ -144,6 +143,16 @@ const UserDetails = () => {
                 setLoading(false);
                 return;
             }
+            if (!formData.name_user.trim()) {
+                setError('El nombre es requerido');
+                setLoading(false);
+                return;
+            }
+            if (!/^\d{10}$/.test(formData.phone)) {
+                setError('El teléfono debe tener exactamente 10 dígitos');
+                setLoading(false);
+                return;
+            }
             
             const updateData = {
                 name_user: formData.name_user,
@@ -151,9 +160,7 @@ const UserDetails = () => {
                 id_plan: formData.id_plan,
                 id_method: formData.id_method,
                 receipt_number: formData.receipt_number,
-                id_manager: loggedManagerId,
-                registration_date: formData.registration_date || null,
-                last_payment_date: formData.last_payment_date || null
+                id_manager: loggedManagerId
             };
             
             await userService.updateUserWithMembership(userId, updateData);
@@ -276,11 +283,13 @@ const UserDetails = () => {
                             {isEditing ? (
                                 <input
                                     type="text"
+                                    inputMode="numeric"
+                                    autoComplete="tel"
+                                    maxLength={10}
                                     name="phone"
                                     value={formData.phone}
                                     onChange={handleInputChange}
                                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-100"
-                                    placeholder="10 dígitos"
                                 />
                             ) : (
                                 <div className="px-3 py-2 bg-gray-50 rounded-md">
@@ -364,39 +373,6 @@ const UserDetails = () => {
                             </div>
                         )}
 
-                        {/* Fecha de Inscripción */}
-                        {isEditing && (
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-2">
-                                    Fecha de Inscripción
-                                </label>
-                                <input
-                                    type="date"
-                                    name="registration_date"
-                                    value={formData.registration_date}
-                                    onChange={handleInputChange}
-                                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-100"
-                                />
-                                <p className="text-xs text-gray-500 mt-1">Dejar vacío para mantener fecha actual</p>
-                            </div>
-                        )}
-
-                        {/* Fecha de Último Pago */}
-                        {isEditing && (
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-2">
-                                    Fecha de Último Pago
-                                </label>
-                                <input
-                                    type="date"
-                                    name="last_payment_date"
-                                    value={formData.last_payment_date}
-                                    onChange={handleInputChange}
-                                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-100"
-                                />
-                                <p className="text-xs text-gray-500 mt-1">Dejar vacío para usar fecha actual</p>
-                            </div>
-                        )}
                     </div>
 
                     {/* Membresía actual */}

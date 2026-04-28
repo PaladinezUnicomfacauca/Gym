@@ -12,9 +12,7 @@ export default function RegisterUser() {
     phone: '',
     id_plan: '',
     id_method: '',
-    receipt_number: '',
-    registration_date: '',  // Nueva fecha de inscripción
-    last_payment_date: ''   // Nueva fecha de último pago
+    receipt_number: ''
   });
   const [plans, setPlans] = useState([]);
   const [paymentMethods, setPaymentMethods] = useState([]);
@@ -58,17 +56,31 @@ export default function RegisterUser() {
   // Actualiza los campos del formulario mientras el usuario escribe.
   const handleInputChange = (e) => {
     const { name, value } = e.target;
+    let next = value;
+    if (name === 'name_user') {
+      next = value.replace(/\d/g, '');
+    } else if (name === 'phone') {
+      next = value.replace(/\D/g, '').slice(0, 10);
+    }
     setFormData(prev => ({
       ...prev,
-      [name]: value
+      [name]: next
     }));
   };
 
   // Crea usuario con membresía (incluye el administrador logueado) y navega a la lista de membresías.
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setLoading(true);
     setError(null);
+    if (!formData.name_user.trim()) {
+      setError('El nombre es requerido');
+      return;
+    }
+    if (!/^\d{10}$/.test(formData.phone)) {
+      setError('El teléfono debe tener exactamente 10 dígitos');
+      return;
+    }
+    setLoading(true);
     try {
       await userService.createUserWithMembership({
         ...formData,
@@ -113,7 +125,10 @@ export default function RegisterUser() {
               Teléfono
             </label>
             <input
-              type='tel'
+              type='text'
+              inputMode='numeric'
+              autoComplete='tel'
+              maxLength={10}
               id='phone'
               name='phone'
               value={formData.phone}
@@ -184,36 +199,6 @@ export default function RegisterUser() {
               className='w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-blue-100'
               required
             />
-          </div>
-
-          <div>
-            <label className='block font-medium text-gray-700 text-sm mb-2' htmlFor='registration_date'>
-              Fecha de Inscripción
-            </label>
-            <input
-              type='date'
-              id='registration_date'
-              name='registration_date'
-              value={formData.registration_date}
-              onChange={handleInputChange}
-              className='w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-blue-100'
-            />
-            <p className='text-xs text-gray-500 mt-1'>Dejar vacío para usar fecha actual</p>
-          </div>
-
-          <div>
-            <label className='block font-medium text-gray-700 text-sm mb-2' htmlFor='last_payment_date'>
-              Fecha de Último Pago
-            </label>
-            <input
-              type='date'
-              id='last_payment_date'
-              name='last_payment_date'
-              value={formData.last_payment_date}
-              onChange={handleInputChange}
-              className='w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-blue-100'
-            />
-            <p className='text-xs text-gray-500 mt-1'>Dejar vacío para usar fecha actual</p>
           </div>
 
           {selectedPlan && (
