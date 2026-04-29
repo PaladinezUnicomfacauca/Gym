@@ -5,7 +5,7 @@ export default function Footer() {
     <div className="bg-black text-white py-4">
       <div className="container mx-auto px-4">
         <p className="text-center">
-          &copy; {new Date().getFullYear()} Biofitness. Todos los derechos reservados.
+          &copy; {new Date().getFullYear()} GYM. Todos los derechos reservados.
         </p>
       </div>
     </div>

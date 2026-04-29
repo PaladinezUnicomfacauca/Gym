@@ -58,7 +58,8 @@ const Nav = () => {
     if (location.pathname === '/') {
       return (
         <nav className="bg-black w-full py-8 px-16 flex justify-center">
-            <div className='flex items-center gap-3'>
+            <div className='flex items-center gap-1'>
+                <img src="/LogoGymWhite.png" alt="Logo" className='w-10 h-10' />
                 <span className='text-white text-lg md:text-2xl font-medium'>GYM</span>
             </div>
         </nav>
@@ -69,7 +70,8 @@ const Nav = () => {
     return (
         <nav className="bg-black w-full py-4 px-4 md:py-8 md:pl-18 md:pr-10">
             <div className="container mx-auto flex items-center justify-between">
-                <div className='flex items-center gap-2 md:gap-3 cursor-pointer' onClick={handleHome}>
+                <div className='flex items-center gap-1 cursor-pointer' onClick={handleHome}>
+                    <img src="/LogoGymWhite.png" alt="Logo" className='w-10 h-10' />
                     <span className='text-white text-lg md:text-2xl font-medium'>GYM</span>
                 </div>
                 <div className='flex items-center gap-4 md:gap-10 relative'>
