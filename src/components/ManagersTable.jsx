@@ -11,6 +11,7 @@ const ManagersTable = ({ data, onDelete }) => {
                         <th className="px-6 py-3 border-gray-300 font-semibold text-black text-left whitespace-nowrap bg-white z-20">Nombre</th> 
                         <th className="px-6 py-3 border-gray-300 font-semibold text-black text-left whitespace-nowrap bg-white z-20">Teléfono</th> 
                         <th className="px-6 py-3 border-gray-300 font-semibold text-black text-left whitespace-nowrap bg-white z-20">Email</th> 
+                        <th className="px-6 py-3 border-gray-300 font-semibold text-black text-left whitespace-nowrap bg-white z-20">Rol</th> 
                         <th className="px-6 py-3 border-gray-300 font-semibold text-black text-center whitespace-nowrap bg-white z-20">Eliminar</th>
                     </tr>
                 </thead>
@@ -24,6 +25,7 @@ const ManagersTable = ({ data, onDelete }) => {
                             <td className="px-6 py-4 border-b border-gray-200 whitespace-nowrap">{item.name_manager}</td> 
                             <td className="px-6 py-4 border-b border-gray-200 whitespace-nowrap">{item.phone}</td> 
                             <td className="px-6 py-4 border-b border-gray-200 whitespace-nowrap">{item.email}</td> 
+                            <td className="px-6 py-4 border-b border-gray-200 whitespace-nowrap">{item.name_role || '—'}</td> 
                             <td className="px-6 py-4 border-b border-gray-200 whitespace-nowrap text-center">
                                 <button
                                     onClick={() => onDelete(item.id_manager)}

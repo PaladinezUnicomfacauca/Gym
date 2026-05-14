@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import ManagersTable from '../components/ManagersTable';
 import { useNavigate } from 'react-router-dom';
 import { managerService } from '../services/managerService';
+import { roleService } from '../services/roleService';
 import { FaPlus } from "react-icons/fa6";
 
 const ManagersList = () => {
@@ -24,8 +25,22 @@ const ManagersList = () => {
         // Pide la lista y actualiza el estado; al terminar quita el estado de carga.
         const fetchManagers = async () => {
             try {
-                const data = await managerService.getAll();
-                setManagers(data);
+                const [managersRaw, rolesList] = await Promise.all([
+                    managerService.getAll(),
+                    roleService.getAll().catch(() => [])
+                ]);
+                const rolesArray = Array.isArray(rolesList) ? rolesList : [];
+                const idToRoleName = {};
+                for (const r of rolesArray) {
+                    idToRoleName[Number(r.id_role)] = r.name_role;
+                }
+                const list = Array.isArray(managersRaw) ? managersRaw : [];
+                setManagers(
+                    list.map((m) => ({
+                        ...m,
+                        name_role: m.name_role || idToRoleName[Number(m.id_role)] || ''
+                    }))
+                );
             } catch (err) {
                 setError('Error al cargar administradores');
             } finally {
@@ -43,7 +58,8 @@ const ManagersList = () => {
                 setManagers(managers.filter(manager => manager.id_manager !== managerId));
                 alert('Administrador eliminado exitosamente');
             } catch (err) {
-                setError('Error al eliminar el administrador');
+                const msg = err.response?.data?.error || 'Error al eliminar el administrador';
+                alert(msg);
                 console.error(err);
             }
         }
@@ -68,7 +84,7 @@ const ManagersList = () => {
                         <div className="hidden sm:flex items-center gap-4">
                             <input
                                 type="text"
-                                placeholder="Buscar por nombre, teléfono o email..."
+                                placeholder="Buscar por nombre, teléfono, email o rol..."
                                 className="w-64 lg:w-80 px-4 py-2 bg-white border border-gray-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-blue-100"
                                 value={searchTerm}
                                 onChange={(e) => setSearchTerm(e.target.value)}
@@ -88,7 +104,7 @@ const ManagersList = () => {
                 <div className="w-full sm:hidden">
                     <input
                         type="text"
-                        placeholder="Buscar por nombre, teléfono o email..."
+                        placeholder="Buscar por nombre, teléfono, email o rol..."
                         className="w-full px-4 py-2 bg-white border border-gray-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-blue-100"
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
@@ -106,7 +122,13 @@ const ManagersList = () => {
                         const telefono = normalize(manager.phone);
                         const email = normalize(manager.email);
                         const term = normalize(searchTerm);
-                        return nombre.includes(term) || telefono.includes(term) || email.includes(term);
+                        const rol = normalize(manager.name_role);
+                        return (
+                            nombre.includes(term) ||
+                            telefono.includes(term) ||
+                            email.includes(term) ||
+                            rol.includes(term)
+                        );
                     })}
                     onDelete={handleDelete}
                 />

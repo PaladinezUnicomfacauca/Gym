@@ -1,5 +1,12 @@
 import React, { useEffect, useState } from 'react';
 import { managerService } from '../services/managerService';
+import { roleService } from '../services/roleService';
+import {
+  sanitizePersonNameInput,
+  sanitizePhoneDigits,
+  validatePersonNameForSubmit,
+  validatePhone10
+} from '../utils/personFields';
 import { MdEdit } from "react-icons/md";
 import { FiChevronLeft } from "react-icons/fi";
 import { useNavigate } from 'react-router-dom';
@@ -10,13 +17,15 @@ export default function ManagerProfile() {
   const managerData = JSON.parse(localStorage.getItem('managerData'));
   const id = managerData?.id_manager;
   const [manager, setManager] = useState(null);
+  const [roles, setRoles] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [isEditing, setIsEditing] = useState(false);
   const [formData, setFormData] = useState({
     name_manager: '',
     phone: '',
-    email: ''
+    email: '',
+    id_role: ''
   });
   const [showPasswordFields, setShowPasswordFields] = useState(false);
   const [passwordData, setPasswordData] = useState({
@@ -26,6 +35,7 @@ export default function ManagerProfile() {
   });
   const [passwordError, setPasswordError] = useState('');
   const [passwordSuccess, setPasswordSuccess] = useState('');
+  const [updateError, setUpdateError] = useState('');
 
   // Al montar (o si cambia el id): carga el administrador desde el servidor y rellena el formulario.
   useEffect(() => {
@@ -38,12 +48,17 @@ export default function ManagerProfile() {
     const fetchManager = async () => {
       try {
         setLoading(true);
-        const data = await managerService.getById(id);
+        const [data, rolesList] = await Promise.all([
+          managerService.getById(id),
+          roleService.getAll().catch(() => [])
+        ]);
         setManager(data);
+        setRoles(Array.isArray(rolesList) ? rolesList : []);
         setFormData({
           name_manager: data.name_manager || '',
           phone: data.phone || '',
-          email: data.email || ''
+          email: data.email || '',
+          id_role: data.id_role != null ? String(data.id_role) : ''
         });
       } catch (err) {
         setError('Error al cargar los datos del administrador');
@@ -56,18 +71,27 @@ export default function ManagerProfile() {
 
   // Activa el modo edición y sincroniza el formulario con los datos guardados.
   const handleStartEditing = () => {
+    setUpdateError('');
     setFormData({
       name_manager: manager.name_manager || '',
       phone: manager.phone || '',
-      email: manager.email || ''
+      email: manager.email || '',
+      id_role: manager.id_role != null ? String(manager.id_role) : ''
     });
     setIsEditing(true);
   };
 
-  // Actualiza nombre, teléfono o email mientras el usuario escribe.
+  // Actualiza nombre, teléfono, email o rol mientras el usuario escribe.
   const handleInputChange = (e) => {
     const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
+    let next = value;
+    if (name === 'name_manager') {
+      next = sanitizePersonNameInput(value);
+    } else if (name === 'phone') {
+      next = sanitizePhoneDigits(value);
+    }
+    setFormData(prev => ({ ...prev, [name]: next }));
+    setUpdateError('');
   };
 
   // Sale del modo edición, restaura el formulario y limpia los campos de contraseña.
@@ -76,20 +100,41 @@ export default function ManagerProfile() {
     setFormData({
       name_manager: manager.name_manager || '',
       phone: manager.phone || '',
-      email: manager.email || ''
+      email: manager.email || '',
+      id_role: manager.id_role != null ? String(manager.id_role) : ''
     });
     setShowPasswordFields(false);
     setPasswordData({ current: '', new: '', confirm: '' });
+    setUpdateError('');
   };
 
   // Guarda los cambios en el servidor (y opcionalmente la contraseña) y refresca el perfil.
   const handleUpdate = async () => {
     try {
       setLoading(true);
+      setUpdateError('');
+      const nameErr = validatePersonNameForSubmit(formData.name_manager);
+      if (nameErr) {
+        setUpdateError(nameErr);
+        setLoading(false);
+        return;
+      }
+      const phoneErr = validatePhone10(formData.phone);
+      if (phoneErr) {
+        setUpdateError(phoneErr);
+        setLoading(false);
+        return;
+      }
+      if (!formData.id_role || Number.isNaN(Number(formData.id_role))) {
+        setUpdateError('Selecciona un rol válido');
+        setLoading(false);
+        return;
+      }
       let updateData = {
-        name_manager: formData.name_manager,
+        name_manager: formData.name_manager.trim(),
         phone: formData.phone,
-        email: formData.email
+        email: formData.email,
+        id_role: Number(formData.id_role)
       };
       // Si los campos de contraseña están llenos y válidos, incluir password
       if (showPasswordFields && passwordData.new && passwordData.confirm) {
@@ -109,14 +154,31 @@ export default function ManagerProfile() {
       await managerService.update(id, updateData);
       const updated = await managerService.getById(id);
       setManager(updated);
+      const roleName =
+        roles.find((r) => Number(r.id_role) === Number(updated.id_role))?.name_role;
+      try {
+        const stored = JSON.parse(localStorage.getItem('managerData') || '{}');
+        if (stored && stored.id_manager === updated.id_manager) {
+          localStorage.setItem(
+            'managerData',
+            JSON.stringify({
+              ...stored,
+              id_role: updated.id_role,
+              ...(roleName ? { name_role: roleName } : {})
+            })
+          );
+        }
+      } catch {
+        /* ignore */
+      }
       setIsEditing(false);
       setShowPasswordFields(false);
       setPasswordData({ current: '', new: '', confirm: '' });
       setPasswordError('');
       setPasswordSuccess('');
+      setUpdateError('');
       alert('Perfil actualizado exitosamente');
     } catch (err) {
-      // Si el error es de contraseña, mostrarlo debajo del campo y no cerrar el form
       const backendError = err?.response?.data?.error || '';
       if (
         backendError === 'La contraseña actual es incorrecta' ||
@@ -126,7 +188,7 @@ export default function ManagerProfile() {
       } else if (backendError === 'La nueva contraseña y la confirmación no coinciden') {
         setPasswordError(backendError);
       } else {
-        setError('Error al actualizar el perfil');
+        setUpdateError(backendError || 'Error al actualizar el perfil');
       }
     } finally {
       setLoading(false);
@@ -194,6 +256,7 @@ export default function ManagerProfile() {
                   value={formData.name_manager}
                   onChange={handleInputChange}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-100"
+                  maxLength={40}
                 />
               ) : (
                 <div className="px-3 py-2 bg-gray-50 rounded-md">{manager.name_manager}</div>
@@ -209,6 +272,9 @@ export default function ManagerProfile() {
                   onChange={handleInputChange}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-100"
                   placeholder="10 dígitos"
+                  inputMode="numeric"
+                  autoComplete="tel"
+                  maxLength={10}
                 />
               ) : (
                 <div className="px-3 py-2 bg-gray-50 rounded-md">{manager.phone}</div>
@@ -226,6 +292,30 @@ export default function ManagerProfile() {
                 />
               ) : (
                 <div className="px-3 py-2 bg-gray-50 rounded-md">{manager.email}</div>
+              )}
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Rol</label>
+              {isEditing ? (
+                <select
+                  name="id_role"
+                  value={formData.id_role}
+                  onChange={handleInputChange}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-100 bg-white"
+                  required
+                >
+                  <option value="">Selecciona un rol</option>
+                  {roles.map((r) => (
+                    <option key={r.id_role} value={String(r.id_role)}>
+                      {r.name_role}
+                    </option>
+                  ))}
+                </select>
+              ) : (
+                <div className="px-3 py-2 bg-gray-50 rounded-md">
+                  {roles.find((r) => Number(r.id_role) === Number(manager.id_role))?.name_role ??
+                    (manager.id_role != null ? `Rol #${manager.id_role}` : '—')}
+                </div>
               )}
             </div>
             {/* Cambiar contraseña */}
@@ -283,6 +373,9 @@ export default function ManagerProfile() {
               </div>
             )}
           </div>
+          {isEditing && updateError && (
+            <p className="text-red-600 text-sm font-medium mt-2">{updateError}</p>
+          )}
           {/* Botones de acción */}
           <div className="mt-8 pt-6 border-t border-gray-200 flex justify-between">
             {!isEditing ? (

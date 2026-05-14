@@ -1,38 +1,75 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { managerService } from '../services/managerService';
+import { roleService } from '../services/roleService';
+import {
+  sanitizePersonNameInput,
+  sanitizePhoneDigits,
+  validatePersonNameForSubmit,
+  validatePhone10
+} from '../utils/personFields';
 
 export default function RegisterManager() {
   const navigate = useNavigate();
+  const [roles, setRoles] = useState([]);
   const [formData, setFormData] = useState({
     name_manager: '',
     phone: '',
     email: '',
     password: '',
-    confirmPassword: ''
+    confirmPassword: '',
+    id_role: ''
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
-  // Actualiza nombre, teléfono, email o contraseñas mientras el usuario escribe.
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const list = await roleService.getAll();
+        if (!cancelled) {
+          setRoles(Array.isArray(list) ? list : []);
+        }
+      } catch {
+        if (!cancelled) {
+          setError('No se pudieron cargar los roles');
+        }
+      }
+    })();
+    return () => { cancelled = true; };
+  }, []);
+
+  // Actualiza nombre, teléfono, email, rol o contraseñas mientras el usuario escribe.
   const handleInputChange = (e) => {
     const { name, value } = e.target;
+    let next = value;
+    if (name === 'name_manager') {
+      next = sanitizePersonNameInput(value);
+    } else if (name === 'phone') {
+      next = sanitizePhoneDigits(value);
+    }
     setFormData(prev => ({
       ...prev,
-      [name]: value
+      [name]: next
     }));
   };
 
   const validateForm = () => {
-    // Validar que las contraseñas coincidan
-    if (formData.password !== formData.confirmPassword) {
-      setError('Las contraseñas no coinciden');
+    const nameErr = validatePersonNameForSubmit(formData.name_manager);
+    if (nameErr) {
+      setError(nameErr);
+      return false;
+    }
+    const phoneErr = validatePhone10(formData.phone);
+    if (phoneErr) {
+      setError(phoneErr);
       return false;
     }
 
-    // Validar que el teléfono tenga exactamente 10 dígitos
-    if (!/^\d{10}$/.test(formData.phone)) {
-      setError('El teléfono debe tener exactamente 10 dígitos');
+    // Validar que las contraseñas coincidan
+    if (formData.password !== formData.confirmPassword) {
+      setError('Las contraseñas no coinciden');
       return false;
     }
 
@@ -46,6 +83,11 @@ export default function RegisterManager() {
     // Validar que la contraseña tenga al menos 6 caracteres
     if (formData.password.length < 6) {
       setError('La contraseña debe tener al menos 6 caracteres');
+      return false;
+    }
+
+    if (formData.id_role === '' || formData.id_role === null || Number.isNaN(Number(formData.id_role))) {
+      setError('Selecciona un rol');
       return false;
     }
 
@@ -66,10 +108,11 @@ export default function RegisterManager() {
     try {
       // Crear objeto con los datos del manager (sin confirmPassword)
       const managerData = {
-        name_manager: formData.name_manager,
+        name_manager: formData.name_manager.trim(),
         phone: formData.phone,
         email: formData.email,
-        password: formData.password
+        password: formData.password,
+        id_role: Number(formData.id_role)
       };
 
       await managerService.create(managerData);
@@ -124,6 +167,8 @@ export default function RegisterManager() {
               className='w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-blue-100'
               required
               maxLength={10}
+              inputMode='numeric'
+              autoComplete='tel'
             />
           </div>
 
@@ -141,6 +186,27 @@ export default function RegisterManager() {
               required
               maxLength={50}
             />
+          </div>
+
+          <div>
+            <label className='block font-medium text-gray-700 text-sm mb-2' htmlFor='id_role'>
+              Rol
+            </label>
+            <select
+              id='id_role'
+              name='id_role'
+              value={formData.id_role}
+              onChange={handleInputChange}
+              className='w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-blue-100 bg-white'
+              required
+            >
+              <option value=''>Selecciona un rol</option>
+              {roles.map((r) => (
+                <option key={r.id_role} value={r.id_role}>
+                  {r.name_role}
+                </option>
+              ))}
+            </select>
           </div>
 
           <div>

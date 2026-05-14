@@ -4,6 +4,12 @@ import { userService } from '../services/userService';
 import { planService } from '../services/planService';
 import { paymentMethodService } from '../services/paymentMethodService';
 import { FaCaretDown } from "react-icons/fa";
+import {
+  sanitizePersonNameInput,
+  sanitizePhoneDigits,
+  validatePersonNameForSubmit,
+  validatePhone10
+} from '../utils/personFields';
 
 export default function RegisterUser() {
   const navigate = useNavigate();
@@ -58,9 +64,9 @@ export default function RegisterUser() {
     const { name, value } = e.target;
     let next = value;
     if (name === 'name_user') {
-      next = value.replace(/\d/g, '');
+      next = sanitizePersonNameInput(value);
     } else if (name === 'phone') {
-      next = value.replace(/\D/g, '').slice(0, 10);
+      next = sanitizePhoneDigits(value);
     }
     setFormData(prev => ({
       ...prev,
@@ -72,18 +78,21 @@ export default function RegisterUser() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError(null);
-    if (!formData.name_user.trim()) {
-      setError('El nombre es requerido');
+    const nameErr = validatePersonNameForSubmit(formData.name_user);
+    if (nameErr) {
+      setError(nameErr);
       return;
     }
-    if (!/^\d{10}$/.test(formData.phone)) {
-      setError('El teléfono debe tener exactamente 10 dígitos');
+    const phoneErr = validatePhone10(formData.phone);
+    if (phoneErr) {
+      setError(phoneErr);
       return;
     }
     setLoading(true);
     try {
       await userService.createUserWithMembership({
         ...formData,
+        name_user: formData.name_user.trim(),
         id_manager: manager?.id_manager 
       });
       navigate('/membresias');
@@ -117,6 +126,7 @@ export default function RegisterUser() {
               onChange={handleInputChange}
               className='w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-blue-100'
               required
+              maxLength={40}
             />
           </div>
 

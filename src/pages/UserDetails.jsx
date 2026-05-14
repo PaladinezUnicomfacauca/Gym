@@ -6,6 +6,12 @@ import { paymentMethodService } from '../services/paymentMethodService';
 import { MdEdit, MdDelete } from "react-icons/md";
 import { FiChevronLeft } from "react-icons/fi";
 import { FaCaretDown } from "react-icons/fa";
+import {
+    sanitizePersonNameInput,
+    sanitizePhoneDigits,
+    validatePersonNameForSubmit,
+    validatePhone10
+} from '../utils/personFields';
 
 const UserDetails = () => {
     const { userId } = useParams();
@@ -104,9 +110,9 @@ const UserDetails = () => {
         const { name, value } = e.target;
         let next = value;
         if (name === 'name_user') {
-            next = value.replace(/\d/g, '');
+            next = sanitizePersonNameInput(value);
         } else if (name === 'phone') {
-            next = value.replace(/\D/g, '').slice(0, 10);
+            next = sanitizePhoneDigits(value);
         }
         setFormData(prev => ({
             ...prev,
@@ -143,19 +149,21 @@ const UserDetails = () => {
                 setLoading(false);
                 return;
             }
-            if (!formData.name_user.trim()) {
-                setError('El nombre es requerido');
+            const nameErr = validatePersonNameForSubmit(formData.name_user);
+            if (nameErr) {
+                setError(nameErr);
                 setLoading(false);
                 return;
             }
-            if (!/^\d{10}$/.test(formData.phone)) {
-                setError('El teléfono debe tener exactamente 10 dígitos');
+            const phoneErr = validatePhone10(formData.phone);
+            if (phoneErr) {
+                setError(phoneErr);
                 setLoading(false);
                 return;
             }
             
             const updateData = {
-                name_user: formData.name_user,
+                name_user: formData.name_user.trim(),
                 phone: formData.phone,
                 id_plan: formData.id_plan,
                 id_method: formData.id_method,
@@ -267,6 +275,7 @@ const UserDetails = () => {
                                     value={formData.name_user}
                                     onChange={handleInputChange}
                                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-100"
+                                    maxLength={40}
                                 />
                             ) : (
                                 <div className="px-3 py-2 bg-gray-50 rounded-md">
